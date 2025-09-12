@@ -9,8 +9,8 @@ namespace BarCreate.Models
     public class StokKartBilgi
     {
         public string StokNo { get; set; } = null!;
-        public decimal KasaIciMiktar { get; set; }
-        public decimal EksiltmeMiktar { get; set; }
+        public int KasaIciMiktar { get; set; }
+        public int EksiltmeMiktar { get; set; }
 
         public ICollection<Barkod> Barkodlar { get; set; } = new List<Barkod>();
     }

@@ -4,9 +4,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using BarCreate.Data;
+
+//using BarCreate.Data;
 using BarCreate.Models;
 using BarCreate.Services;
-using Microsoft.EntityFrameworkCore;
+//using Microsoft.EntityFrameworkCore;
 
 
 namespace BarCreate
@@ -22,133 +24,20 @@ namespace BarCreate
 
         }
 
-        private async void Form1_Load(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
-            try
-            {
-                await EnsureDatabaseAsync();   // Migrate
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Veritabanı kurulurken hata: " + ex.Message);
-            }
-
-            await YukleGridAsync();
+                   YukleGrid();
         }
 
-        private async Task BtnKaydetAsync()
+        private void YukleGrid(string? stokNoFilter = null)
         {
-            var stokNo = (txtStokNo.Text ?? "").Trim();
-            var miktarText = (txtMiktar.Text ?? "").Trim();
+            var list = DataStore.Barkodlar
+                .Where(b => string.IsNullOrWhiteSpace(stokNoFilter) || b.StokNo == stokNoFilter)
+                .OrderBy(b => b.BarkodNo)
+                .Select(b => new { b.BarkodNo, b.StokNo, b.KasaIciMiktar, b.EksiltmeMiktar })
+                .ToList();
 
-            if (string.IsNullOrWhiteSpace(stokNo))
-            {
-                MessageBox.Show("StokNo giriniz.");
-                return;
-            }
-
-            if (!decimal.TryParse(miktarText, NumberStyles.Number, CultureInfo.InvariantCulture, out var islemMiktari))
-            {
-                if (!decimal.TryParse(miktarText, out islemMiktari))
-                {
-                    MessageBox.Show("Miktar geçerli bir sayı olmalı.");
-                    return;
-                }
-            }
-
-            if (islemMiktari <= 0)
-            {
-                MessageBox.Show("Miktar 0’dan büyük olmalı.");
-                return;
-            }
-
-            using var db = new AppDbContext();
-            using var tx = await db.Database.BeginTransactionAsync();
-
-            btnKaydet.Enabled = false;
-            Cursor = Cursors.WaitCursor;
-
-            try
-            {
-
-                try
-                {
-
-                    try { await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE Barkod"); }
-                    catch
-                    {
-                        await db.Database.ExecuteSqlRawAsync("DELETE FROM Barkod"); // eğer truncate edemezse diye önlem alındı.
-                    }
-
-                    // Stok bilgisi alınıyor
-                    var stok = await db.StokKartBilgileri
-                        .AsNoTracking()
-                        .FirstOrDefaultAsync(s => s.StokNo == stokNo);
-
-                    if (stok is null)
-                    {
-                        MessageBox.Show($"StokKartBilgi'de '{stokNo}' bulunamadı.");
-                        return;
-                    }
-
-                    var kasaIci = stok.KasaIciMiktar;
-                    var eksiltme = stok.EksiltmeMiktar;
-
-                    var tamKutu = Math.Floor(islemMiktari / kasaIci); //girilen adete ve stok kartındaki kasa içi miktarına göre tam çıkan kutular
-                    var kalan = islemMiktari % kasaIci; //tam kasa olamayacak kalan malzemeleri buluyor
-
-                    int etiketAdedi = (int)tamKutu + (kalan > 0 ? 1 : 0); // tam kutuların üzerine kalan varsa onun adetini de ekleyerek adet sayısını belirliyor
-
-                    // Barkod numaralarının üretildiği kısım
-                    var barkodNolar = await BarcodeService.GenerateDailySequentialAsync(db, etiketAdedi);
-                    int index = 0;
-
-                    // Tam kutular
-                    for (int i = 0; i < (int)tamKutu; i++)
-                    {
-                        var barkod = new Barkod
-                        {
-                            BarkodNo = barkodNolar[index++],
-                            StokNo = stokNo,
-                            KasaIciMiktar = kasaIci,
-                            EksiltmeMiktar = eksiltme
-                        };
-                        db.Barkodlar.Add(barkod);
-                    }
-
-                    // Kalan
-                    if (kalan > 0)
-                    {
-                        var kalanEksiltme = Math.Min(kalan, eksiltme);
-
-                        var barkodKalan = new Barkod
-                        {
-                            BarkodNo = barkodNolar[index++],
-                            StokNo = stokNo,
-                            KasaIciMiktar = kalan,
-                            EksiltmeMiktar = kalanEksiltme
-                        };
-                        db.Barkodlar.Add(barkodKalan);
-                    }
-
-                    await db.SaveChangesAsync();
-                    await tx.CommitAsync();
-
-                    await YukleGridAsync(stokNo);
-                    MessageBox.Show($"{etiketAdedi} adet barkod oluşturuldu ve tabloya eklendi.");
-
-                }
-                finally
-                {
-                    Cursor = Cursors.Default;
-                    btnKaydet.Enabled = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                await tx.RollbackAsync();
-                MessageBox.Show("İşlem sırasında hata oluştu: " + ex.Message);
-            }
+            dgvBarkodlar.DataSource = list;
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -156,50 +45,84 @@ namespace BarCreate
 
         }
 
-        private async void btnKaydet_Click(object sender, EventArgs e)
+        private void btnKaydet_Click(object sender, EventArgs e)
         {
-            await BtnKaydetAsync();
-        }
+            var stokNo = (txtStokNo.Text ?? "").Trim().ToUpperInvariant();
+            var miktarText = (txtMiktar.Text ?? "").Trim();
 
-        private static async Task EnsureDatabaseAsync()
-        {
-            using var db = new AppDbContext();
-            await db.Database.MigrateAsync();   // <-- migrationları otomatik olarak uygular, db yoksa oluşturur en başta
-
-            // İlk çalıştırmada StokKartBilgi tablosu boşsa A/B/C örneklerini ekle
-            if (!await db.StokKartBilgileri.AnyAsync())
+            if (string.IsNullOrWhiteSpace(stokNo) || !stokNo.All(char.IsLetter))
             {
-                db.StokKartBilgileri.AddRange(
-                    new StokKartBilgi { StokNo = "A", KasaIciMiktar = 50, EksiltmeMiktar = 10 },
-                    new StokKartBilgi { StokNo = "B", KasaIciMiktar = 20, EksiltmeMiktar = 5 },
-                    new StokKartBilgi { StokNo = "C", KasaIciMiktar = 1200, EksiltmeMiktar = 300 }
-                );
-                await db.SaveChangesAsync();
+                ShowWarning("StokNo sadece harf ve boş olamaz!");
+                return;
             }
-        }
+            if (!int.TryParse(miktarText, out var miktar) || miktar <= 0 || (miktarText.Length > 1 && miktarText.StartsWith("0")))
+            {
+                ShowWarning("Miktar pozitif tam sayı olmalı ve 0 ile başlayamaz!");
+                return;
+            }
 
-        private async Task YukleGridAsync(string? stokNoFilter = null)
-        {
-            using var db = new AppDbContext();
+            // 1) Her giriş öncesi barkod listesini temizle
+            DataStore.ClearBarkod();
 
-            IQueryable<Barkod> q = db.Barkodlar.AsNoTracking();
+            // 2) Stok kartını bul
+            var stok = DataStore.StokKartlari.FirstOrDefault(s => s.StokNo == stokNo);
+            if (stok is null)
+            {
+                ShowWarning($"StokKartBilgi'de '{stokNo}' yok!");
+                return;
+            }
+            if (stok.KasaIciMiktar <= 0)
+            {
+                ShowWarning("KasaİçiMiktar 0’dan büyük olmalı!");
+                return;
+            }
 
-            if (!string.IsNullOrWhiteSpace(stokNoFilter))
-                q = q.Where(b => b.StokNo == stokNoFilter);
 
-            var list = await q
-                .OrderBy(b => b.BarkodNo)
-                .Select(b => new
+
+
+            // 3) Kasa katlarına böl
+            var tamKutu = miktar / stok.KasaIciMiktar;
+            var kalan = miktar % stok.KasaIciMiktar;
+            var etiketAdedi = tamKutu + (kalan > 0 ? 1 : 0);
+            if (etiketAdedi == 0)
+            {
+                ShowWarning("Oluşturulacak barkod yok.");
+                return;
+            }
+
+            // 4) BarkodNo üret
+            var barkodNolar = BarcodeService.GenerateDailySequential(etiketAdedi);
+            int index = 0;
+
+            // Tam kutular
+            for (int i = 0; i < tamKutu; i++)
+            {
+                DataStore.Barkodlar.Add(new Barkod
                 {
-                    b.BarkodNo,
-                    b.StokNo,
-                    b.KasaIciMiktar,
-                    b.EksiltmeMiktar
-                })
-                .ToListAsync();
+                    BarkodNo = barkodNolar[index++],
+                    StokNo = stokNo,
+                    KasaIciMiktar = stok.KasaIciMiktar,
+                    EksiltmeMiktar = stok.EksiltmeMiktar
+                });
+            }
 
-            dgvBarkodlar.DataSource = list;
+            // Kalan
+            if (kalan > 0)
+            {
+                var kalanEksiltme = Math.Min(kalan, stok.EksiltmeMiktar);
+                DataStore.Barkodlar.Add(new Barkod
+                {
+                    BarkodNo = barkodNolar[index++],
+                    StokNo = stokNo,
+                    KasaIciMiktar = kalan,
+                    EksiltmeMiktar = kalanEksiltme
+                });
+            }
+
+            YukleGrid(stokNo);
+            MessageBox.Show($"{etiketAdedi} adet barkod oluşturuldu ve tabloya eklendi.");
         }
+
 
         private void ApplyStyling()
         {
