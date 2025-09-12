@@ -94,13 +94,17 @@
             // 
             // lblWarning
             // 
-            /*lblWarning.AutoSize = true;
+            lblWarning.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblWarning.AutoSize = true;
+            lblWarning.BackColor = Color.Transparent;
+            lblWarning.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblWarning.ForeColor = Color.Red;
-            lblWarning.Location = new Point(25, 420);
+            lblWarning.Location = new Point(284, 10);
             lblWarning.Name = "lblWarning";
             lblWarning.Size = new Size(0, 15);
             lblWarning.TabIndex = 6;
-            lblWarning.Visible = false;*/
+            lblWarning.TextAlign = ContentAlignment.TopRight;
+            lblWarning.Visible = false;
             // 
             // Form1
             // 
@@ -113,27 +117,13 @@
             Controls.Add(label2);
             Controls.Add(txtStokNo);
             Controls.Add(label1);
-            //Controls.Add(lblWarning);
+            Controls.Add(lblWarning);
             Name = "Form1";
-            Text = "Form1";
+            Text = "BarCreate";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)dgvBarkodlar).EndInit();
             ResumeLayout(false);
             PerformLayout();
-
-            this.lblWarning = new System.Windows.Forms.Label();
-            this.lblWarning.AutoSize = true;
-            this.lblWarning.ForeColor = System.Drawing.Color.Red;
-            this.lblWarning.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.lblWarning.BackColor = System.Drawing.Color.Transparent;
-
-            // Sağ üstte sabitle
-            this.lblWarning.Anchor = (System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right);
-            this.lblWarning.Location = new System.Drawing.Point(this.ClientSize.Width - 200, 10);
-            this.lblWarning.TextAlign = System.Drawing.ContentAlignment.TopRight;
-
-            this.lblWarning.Visible = false;
-            this.Controls.Add(this.lblWarning);
         }
 
         private Label label1;
