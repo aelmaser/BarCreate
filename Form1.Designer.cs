@@ -99,7 +99,7 @@
             lblWarning.BackColor = Color.Transparent;
             lblWarning.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             lblWarning.ForeColor = Color.Red;
-            lblWarning.Location = new Point(284, 10);
+            lblWarning.Location = new Point(438, 28);
             lblWarning.Name = "lblWarning";
             lblWarning.Size = new Size(0, 15);
             lblWarning.TabIndex = 6;
