@@ -165,6 +165,17 @@ namespace BarCreate
         {
             using var db = new AppDbContext();
             await db.Database.MigrateAsync();   // <-- migrationları otomatik olarak uygular, db yoksa oluşturur en başta
+
+            // İlk çalıştırmada StokKartBilgi tablosu boşsa A/B/C örneklerini ekle
+            if (!await db.StokKartBilgileri.AnyAsync())
+            {
+                db.StokKartBilgileri.AddRange(
+                    new StokKartBilgi { StokNo = "A", KasaIciMiktar = 50, EksiltmeMiktar = 10 },
+                    new StokKartBilgi { StokNo = "B", KasaIciMiktar = 20, EksiltmeMiktar = 5 },
+                    new StokKartBilgi { StokNo = "C", KasaIciMiktar = 1200, EksiltmeMiktar = 300 }
+                );
+                await db.SaveChangesAsync();
+            }
         }
 
         private async Task YukleGridAsync(string? stokNoFilter = null)
