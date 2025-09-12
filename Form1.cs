@@ -306,7 +306,7 @@ namespace BarCreate
             if (!char.IsControl(e.KeyChar) && !char.IsLetter(e.KeyChar))
             {
                 e.Handled = true; // karakteri iptal et
-                ShowWarning("StokNo sadece harf olabilir!");
+                ShowWarning("Stok Bilgisi sadece harf olabilir!");
                 return;
             }
         }
