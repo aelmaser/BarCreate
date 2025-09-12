@@ -24,7 +24,7 @@
 ## Çalıştırma
 
 1. **İndir:**  
-   **https://github.com/aelmaser/BarCreate/releases/tag/v1.0.0** sayfasından en güncel `BarCreate.zip` dosyasını indirin.
+   **https://github.com/aelmaser/BarCreate/releases/tag/v1.0.1** sayfasından en güncel `BarCreate.zip` dosyasını indirin.
 
 2. **Çıkar & Çalıştır:**  
    Zip’i açın, `BarCreate.exe` dosyasına çift tıklayın.
