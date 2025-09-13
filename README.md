@@ -1,46 +1,66 @@
 # BarCreate
 
-**WinForms + Entity Framework Core** ile geliştirilmiş basit bir stok ve barkod uygulaması.  
+**WinForms + Entity Framework Core (release v1.0.2 için)** ile geliştirilmiş basit bir stok ve barkod uygulaması.  
 
 ---
 
 ## Amaç
-- Kullanıcı, hayali bir **Stok Adı** ve bu stoktaki **Miktar** bilgisini girer.  
+- Kullanıcı, bir **Stok Adı** ve bu stoktaki **Miktar** bilgisini girer.  
 - Uygulama `StokKartBilgi` tablosundaki kasa içi miktar ve eksiltme kurallarına göre  
   **otomatik barkod numaraları** üretir ve `Barkod` tablosuna yazar.  
-- Barkod numarası formatı: `yyMMdd-benzersizyapannumaradizisi` (örn: `2509120001`).  
+- Barkod numarası formatı: `yyMMdd-uniquenumara` (örn: `2509120001`).  
 - Sonuçlar uygulamada tabloda listelenir.
 
 ---
 
 ## Kullanılan Teknolojiler
 - **C# .NET 8.0 (WinForms)**
-- **Entity Framework Core 9**
-- **MSSQL / LocalDB**
-- **Code-First Migrations** (veritabanı ve tablolar otomatik oluşturulur)
+- **Entity Framework Core 9 (release v1.0.2 için)**
+- **MSSQL / LocalDB (release v1.0.2 için)**
+- **Code-First Migrations (release v1.0.2 için)** (veritabanı ve tablolar otomatik oluşturulur)
 
 ---
 
 ## Çalıştırma
 
 1. **İndir:**  
-   **https://github.com/aelmaser/BarCreate/releases/tag/v1.0.1** sayfasından en güncel `BarCreate.zip` dosyasını indirin.
+   **Veritabanı entegrasyonlu versiyon için : https://github.com/aelmaser/BarCreate/releases/tag/v1.0.2** sayfasından en güncel `BarCreate.zip` dosyasını indirin.
+   
+   **Veritabanı bağlantısı olmayan in-memory versiyon için : https://github.com/aelmaser/BarCreate/releases/tag/v1.0.3** sayfasından en güncel `BarCreate.zip` dosyasını indirin.
 
-2. **Çıkar & Çalıştır:**  
+3. **Çıkar & Çalıştır:**  
    Zip’i açın, `BarCreate.exe` dosyasına çift tıklayın.
 
-3. **Önkoşul:**  
-   - Bilgisayarınızda **SQL Server (LocalDB veya Express)** kurulu olmalıdır.  
+4. **Önkoşul: (release v1.0.2 için)**  
+   - Bilgisayarınızda **SQL Server (LocalDB veya Express)** kurulu olmalıdır.
    - Varsayılan connection string:  
      ```
      Server=(localdb)\MSSQLLocalDB;Database=CaseStokDb;Trusted_Connection=True;TrustServerCertificate=True;
      ```
-     İsterseniz `appsettings.Development.json` içinde bağlantı yolu değiştirilebilir.
 
-4. **İlk açılış:**  
+5. **İlk açılış: (release v1.0.2 için)**  
    - EF Core `MigrateAsync()` ile veritabanı ve tablolar otomatik oluşturulur.  
 
 ---
+
+## Hesaplama Yöntemi
+
+1- Barkodlar listesi temizlenirGirilen stok bilgisine göre kasa içi miktarı ve eksiltme bilgisi çekilir. 
+
+2- Kullanıcı tarafından girilen miktar bilgisi öncelikle kasa içi miktarı bilgisine bölünerek tam kasa sayısı ortaya çıkarılır.
+
+3- Kullanıcı tarafından girilen miktar bilgisi kasa içi miktarına göre modu alınarak artık kalan miktar bilgisi ortaya çıkartılır. Eğer bu kalan bilgisi 0'dan büyük ise etiket miktarına bir eklenir.
+
+4- Benzersiz barkodların oluşturulması adına BarcodeService adlı servise etiket adeti bilgisi gönderilerek çalıştırılır. 
+   Burada res adlı Liste oluşturulur, prefix adlı değişkene günün yyMMdd formatında bilgisi eklenir, sonrasında bir for döngüsü ile etiket sayısı kadar (prefix + döngü indisinin 4 basamak genişletilmiş hali) bilgisi res listesine her döngüde eklenir.
+   
+5- Etiket bilgileri oluştuktan sonra tam kutular için stok no, kasa içi miktar ve eksiltme miktarı bilgileriyle DataStore adlı sınıfta tutulan Barkodlar adlı listeye veriler işlenir.
+
+6- Artık kalan bilgi var ise öncelikle eksiltme bilgisi ortaya çıkarılır. Burada artık kalan sayı mı büyük, yoksa stok kart bilgi tablosundaki eksiltme miktarı mı büyük buna bakılır hangisi küçük ise o bilgi eksiltme miktarı olarak kullanılır. Bu bilgiyle birlikte        5.maddedeki gibi tabloda gösterilmek adına stok no, kasa içi miktar ve eksiltme miktarı bilgileriyle DataStore adlı sınıfta tutulan Barkodlar adlı listeye veriler işlenir.
+
+7- YukleGrid yardımcı fonksiyonu ile kullanıcının sonuçları göreceği tabloya bilgiler aktarılır.
+
+
 
 ## Örnek Test Senaryoları
 
