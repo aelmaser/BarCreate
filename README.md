@@ -25,6 +25,7 @@
 
 1. **İndir:**  
    **Veritabanı entegrasyonlu versiyon için : https://github.com/aelmaser/BarCreate/releases/tag/v1.0.2** sayfasından en güncel `BarCreate.zip` dosyasını indirin.
+   
    **Veritabanı bağlantısı olmayan in-memory versiyon için : https://github.com/aelmaser/BarCreate/releases/tag/v1.0.3** sayfasından en güncel `BarCreate.zip` dosyasını indirin.
 
 3. **Çıkar & Çalıştır:**  
