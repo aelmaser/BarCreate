@@ -61,14 +61,14 @@ namespace BarCreate
                 return;
             }
 
-            // 1) Her giriş öncesi barkod listesini temizle
+            // 1) Her giriş öncesi barkod listesi temizlenir
             DataStore.ClearBarkod();
 
-            // 2) Stok kartını bul
+            // 2) Stok kartı bilgileri çekilir.
             var stok = DataStore.StokKartlari.FirstOrDefault(s => s.StokNo == stokNo);
             if (stok is null)
             {
-                ShowWarning($"StokKartBilgi'de '{stokNo}' yok!");
+                ShowWarning($"StokKartBilgi tablosunda '{stokNo}' yok!");
                 return;
             }
             if (stok.KasaIciMiktar <= 0)
